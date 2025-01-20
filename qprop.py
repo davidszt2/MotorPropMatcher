@@ -29,9 +29,11 @@ class QPROP():
                 linesArr.append(line.split())
                 
         dataHeaders = linesArr[16][1:]
-        dataValues = [float(i) for i in linesArr[17][1:]]
-        self.parsedOutput = dict(zip(dataHeaders, dataValues))
-        
+        try:
+            dataValues = [float(i) for i in linesArr[17][1:]]
+            self.parsedOutput = dict(zip(dataHeaders, dataValues))
+        except:
+            self.parsedOutput = dict(zip(dataHeaders, [0 for i in range(len(dataHeaders))]))
         return self.parsedOutput
     
     
@@ -49,7 +51,7 @@ class QPROP():
             self.run(Vel, RPM[0])
             return self.parsedOutput['T(N)'] - Treq
         
-        sol = fsolve(f, 1000)
+        sol = fsolve(f, 5000)
         return sol[0]
         
 
@@ -68,10 +70,9 @@ if __name__ == "__main__":
             qprop.run(V, trimRPM)
             output = qprop.parsedOutput
             thrust = output['T(N)']
-            
             # print(thrust)
             
             # Append motor, prop, trim RPM, and Pelec to CSV
             with open("output.csv", "a") as f:
-                f.write(motor + "," + prop + "," + str(trimRPM) + "," + str(output['Pelec']) + "\n") if np.abs(thrust - Treq) < 0.1 else None
+                f.write(motor + "," + prop + "," + str(trimRPM) + "," + str(output['Pelec']) + "," + str(thrust) + "\n") # if np.abs(thrust - Treq) < 0.1 else None
             

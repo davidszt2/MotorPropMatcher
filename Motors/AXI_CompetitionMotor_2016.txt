@@ -1,0 +1,7 @@
+AXI_CompetitionMotor_2016
+
+1
+
+0.04
+2.30
+1640.00

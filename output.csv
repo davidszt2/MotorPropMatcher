@@ -1,5 +1,4 @@
-Motor,prop,rpm,P_elec,T
-
+Motor,Prop,Trim RPM,Pelec,Thrust
 FlightLine_5055_390.txt,apc17x12.txt,-245000.0,0,0
 FlightLine_5055_390.txt,apc29ff_9x5.txt,11077.049763173,293.5,10.0
 FlightLine_5055_390.txt,apce_10x5.txt,9596.716643176327,269.4,10.0

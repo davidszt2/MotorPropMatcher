@@ -5,13 +5,13 @@ import matplotlib.pyplot as plt
 import os
 
 class QPROP():
-    def __init__(self, prop, motor):
+    def __init__(self, prop, motor, verbose=True):
         self.prop = prop
         self.motor = motor
         self.kv = float(open(self.motor, 'r').readlines()[-1])
         
-        print(self.motor.split('\\')[-1] + " loaded successfully.")
-        print(self.prop.split('\\')[-1] + " loaded successfully.")
+        print(self.motor.split('\\')[-1] + " loaded successfully.") if verbose else None
+        print(self.prop.split('\\')[-1] + " loaded successfully.") if verbose else None
         
         
     def raw(self, Vel, RPM):
@@ -75,21 +75,25 @@ if __name__ == "__main__":
     props = os.listdir("Props")
     motors = os.listdir("Motors")
     Treq = 10 # N
-    V = 11 # m/s
+    Vcruise = 11 # m/s
     outputName = "output.csv"
     
     for prop in props:
         motor = "FlightLine_5055_390.txt"
         qprop = QPROP("Props/" + prop, "Motors/" + motor)
-        trimRPM = qprop.convergeThrust(V, Treq)
-        qprop.run(V, trimRPM)
+        trimRPM = qprop.convergeThrust(Vcruise, Treq)
+        qprop.run(Vcruise, trimRPM)
         output = qprop.parsedOutput
         thrust = output['T(N)']
         
-        # Append motor, prop, trim RPM, and Pelec to CSV
-        with open("output.csv", "a") as f:
-            f.write(motor + "," + prop + "," + str(trimRPM) + "," + str(output['Pelec']) + "," + str(thrust) + "\n") # if np.abs(thrust - Treq) < 0.1 else None
-
+        if prop == props[0]:
+            with open("output.csv", "w") as f:
+                f.write("Motor,Prop,Trim RPM,Pelec,Thrust\n")
+                f.write(motor + "," + prop + "," + str(trimRPM) + "," + str(output['Pelec']) + "," + str(thrust) + "\n")
+        else:
+            with open("output.csv", "a") as f:
+                f.write(motor + "," + prop + "," + str(trimRPM) + "," + str(output['Pelec']) + "," + str(thrust) + "\n")
+    
     """Vmax and Current Draws"""
     motor = "Motors/FlightLine_5055_390.txt"
     props = ["Props/apce_11x8.txt", "Props/apce_11x10.txt", "Props/apce_12x8.txt", "Props/apce_14x12.txt", "Props/apce_17x12.txt"]
@@ -102,10 +106,15 @@ if __name__ == "__main__":
     fig2, ax2 = plt.subplots()
     
     for prop in props:
-        qprop = QPROP(prop, motor)
+        qprop = QPROP(prop, motor, verbose=False)
         thrustArr, ampArr = qprop.thrustAvailableSweep(velArr, cellCount)
         ax1.plot(velArr, thrustArr, label=labels[props.index(prop)], linestyle='--')
         ax2.plot(ampArr, thrustArr, label=labels[props.index(prop)], linestyle='--')
+        
+        trimRPM = qprop.convergeThrust(Vcruise, Treq)
+        qprop.run(Vcruise, trimRPM)
+        print("Prop: " + prop + " | Cruise Amp: " + str(qprop.parsedOutput['Amps']) + " | Cruise Thrust: " + str(qprop.parsedOutput['T(N)']) + "N")
+
     
     CD0 = 0.036 * 2
     e = 0.96
@@ -116,7 +125,7 @@ if __name__ == "__main__":
     Treq = 0.5 * rho * S * CD0 * np.float_power(velArr, 2) + 2 * k * np.float_power(velArr, 2)
     ax1.plot(velArr, Treq, label="Required", linestyle='-', color='black')
     
-    fig1.suptitle("Thrust vs Velocity")
+    fig1.suptitle("Thrust Available/Required vs Velocity")
     ax1.set_xlabel("Velocity (m/s)")
     ax1.set_ylabel("Thrust (N)")
     ax1.legend()
